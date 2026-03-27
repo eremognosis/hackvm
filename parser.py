@@ -14,25 +14,24 @@ ARGMAPS = {
 
 
 
-def parse(code:str):
+def parse(code:str, fname:str):
+    out = []
     code = code.strip()
     lines = code.split("\n")
-    for line in lines:
-        sline=line.strip()
-        words = sline.split(" ")
-     
-
+    for i,line in enumerate(lines):
     
-parse("""
-      
-      
-      push constant 3
-      push constant 5
-      add
-      pop static 1
-      
-      
-      """)
+        sline=line.strip()
+        if not sline or sline.startswith("//"): continue
+        sline = sline.split()
+        if len(sline)==1:
+            out.append(arith(sline[0].strip(),i).strip())
+        else:
+            print(sline)
+            op  =Operation(sline[0],sline[1],int(sline[2]),fname,i)
+            out.append(op.do().strip())
+    # return "\n".join(out)
+    return out
+
 
 oper = ["push", "pop"]
 
@@ -54,24 +53,24 @@ class Operation:
             if self.seg == "constant":
                 val = self.addr
                 return f"""
-                        @{val}
-                        D = A
-                        @SP
-                        A = M
-                        M = D
-                        @SP
-                        M = M + 1            
+@{val}
+D = A
+@SP
+A = M
+M = D
+@SP
+M = M + 1            
             """
             elif self.seg == "temp":
                 tar = self.addr + 5
                 return f"""
-                        @{tar}
-                        D = M
-                        @SP
-                        A = M
-                        M = D
-                        @SP
-                        M = M + 1 
+@{tar}
+D = M
+@SP
+A = M
+M = D
+@SP
+M = M + 1 
             
             """
             elif self.seg == "static":
@@ -80,13 +79,13 @@ class Operation:
                 
                 return f"""
             
-                        @{fn}.{addr}
-                        D = M
-                        @SP
-                        A = M
-                        M = D
-                        @SP
-                        M = M + 1 
+@{fn}.{addr}
+D = M
+@SP
+A = M
+M = D
+@SP
+M = M + 1 
             
             
             
@@ -97,30 +96,30 @@ class Operation:
                 addr = self.addr
                 return f"""
             
-                        @{star}
-                        D = M                   
-                        @{addr}
-                        D = D + A
-                        A = D
-                        D = M
-                        @SP
-                        A = M
-                        M = D
-                        @SP
-                        M = M + 1 
+@{star}
+D = M                   
+@{addr}
+D = D + A
+A = D
+D = M
+@SP
+A = M
+M = D
+@SP
+M = M + 1 
             
             
             """
             elif self.seg == "pointer":
                 tar = self.addr + 3
                 return f"""
-                            @{tar}
-                            D = M
-                            @SP
-                            A = M
-                            M = D
-                            @SP
-                            M = M +1
+@{tar}
+D = M
+@SP
+A = M
+M = D
+@SP
+M = M +1
                               
             """
                 
@@ -131,40 +130,40 @@ class Operation:
                 addd = self.addr
                 tseg = ARGMAPS.get(self.seg)
                 return f"""
-                        @{tseg}
-                        D = M
-                        @{addd}
-                        D = D + A
-                        @R13
-                        M = D
-                        @SP
-                        AM = M - 1
-                        D = M
-                        @R13
-                        A = M
-                        M = D
+@{tseg}
+D = M
+@{addd}
+D = D + A
+@R13
+M = D
+@SP
+AM = M - 1
+D = M
+@R13
+A = M
+M = D
             """
                 
             if self.seg == "temp":
                 addd = self.addr + 5
                 return f"""
             
-                    @SP
-                    AM = M -1
-                    D = M
-                    @{addd}
-                    M = D         
+@SP
+AM = M -1
+D = M
+@{addd}
+M = D         
             """
             elif self.seg == "static":
                 fnp = self.fname
                 adddd = self.addr
                 
                 return f"""
-                        @SP
-                        AM = M -1
-                        D = M
-                        @{fnp}.{adddd}
-                        M =D
+@SP
+AM = M -1
+D = M
+@{fnp}.{adddd}
+M =D
             
             """
 
@@ -172,11 +171,11 @@ class Operation:
             elif self.seg == "pointer":
                 tar = self.addr + 3
                 return f"""
-                            @SP
-                            AM = M -1
-                            D = M
-                            @{tar}
-                            M = D
+@SP
+AM = M -1
+D = M
+@{tar}
+M = D
                               
             """
             
@@ -186,7 +185,70 @@ class Operation:
             
             
             
-            
-            
-            
-            
+def arith(op:str,n2:int):
+    if not op in COMMANDS:
+        raise SyntaxError("go fuck urself ")
+    mbap =  {
+        
+        "add": "+",
+        "sub" : "-",
+        "and" : "&",
+        "or" : "|"
+       
+        
+    }       
+    if op in ["add","sub","and","or"]:
+        return f"""
+    
+@SP
+AM = M-1
+D = M
+A = A-1
+M = M {mbap[op]}D
+    
+    
+    """
+  
+    #eq : logic is to pull the the top of stack(A) and chekc with next
+    map = {
+        
+        "eq" : "JEQ",
+        "lt" : "JLT",
+        "gt" : "JGT",
+    }
+    if op in map.keys():
+        return f"""
+    
+@SP
+AM = M-1
+D = M
+A = A -1
+D = M - D
+M = -1
+@EQ{n2}
+D;{map[op]}
+@SP
+A = M - 1
+M = 0
+(EQ{n2})
+    
+    """
+    
+    umap = {
+        "neg" : "-",
+        "not" : "!"
+    }
+    if op in umap.keys():
+        return f"""
+
+@SP
+A = M -1
+M = {umap[op]}M
+    
+    
+    """
+    
+    
+# gt lt eq
+# neg neg
+# and or 
