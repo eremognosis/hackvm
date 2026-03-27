@@ -1,7 +1,7 @@
 import string
 
 
-SEGMENTS = ["argument","local","static", "constant","this","that","temp"]
+SEGMENTS = ["argument","local","static", "constant","this","that","temp", "pointer"]
 COMMANDS = ["add","sub","neg","eq","gt","lt","and","or","not"]
 
 ARGMAPS = {
@@ -45,7 +45,7 @@ class Operation:
             self.seg = seg
         self.addr = n 
         
-        if not (self.op and self.seg and self.addr): ### FUCK push constant 0   (isinstance check but i will do later)
+        if not (self.op and self.seg and self.addr is not None): ### FUCK push constant 0   (isinstance check but i will do later)
             raise SyntaxError("Invalid Operation")
         self.fname = fname
         self.n2 = n2        
@@ -111,6 +111,19 @@ class Operation:
             
             
             """
+            elif self.seg == "pointer":
+                tar = self.addr + 3
+                return f"""
+                            @{tar}
+                            D = M
+                            @SP
+                            A = M
+                            M = D
+                            @SP
+                            M = M +1
+                              
+            """
+                
         else:
             if self.seg in ARGMAPS.keys():
                 # pass
@@ -142,7 +155,7 @@ class Operation:
                     @{addd}
                     M = D         
             """
-            if self.seg == "static":
+            elif self.seg == "static":
                 fnp = self.fname
                 adddd = self.addr
                 
@@ -154,6 +167,26 @@ class Operation:
                         M =D
             
             """
+
         
-        
-        
+            elif self.seg == "pointer":
+                tar = self.addr + 3
+                return f"""
+                            @SP
+                            AM = M -1
+                            D = M
+                            @{tar}
+                            M = D
+                              
+            """
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
