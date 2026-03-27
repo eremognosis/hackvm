@@ -342,7 +342,6 @@ D=M
 @ARG
 A=M
 M=D
-M=D
 @ARG
 D = M+1
 @SP
