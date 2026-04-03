@@ -103,7 +103,7 @@ M=M+1
                 return f"""
             
 @{star}
-D=M                   
+D=M
 @{addr}
 D=D+A
 A=D
@@ -125,7 +125,7 @@ D=M
 A=M
 M=D
 @SP
-M=M +1
+M=M+1
                               
             """
                 
@@ -166,7 +166,7 @@ M=D
                 
                 return f"""
 @SP
-AM=M -1
+AM=M-1
 D=M
 @{fnp}.{adddd}
 M=D
