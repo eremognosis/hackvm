@@ -1,3 +1,9 @@
 /.venv
 /__pycache__
 /test.asm
+/tests/__pycache__
+/..asm
+/__pycache__/
+/tests/__pycache__/
+/tests/.pytest_cache/
+/.pytest_cache/

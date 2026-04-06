@@ -50,7 +50,7 @@ class Operation:
             self.seg=seg
         self.addr=n 
         
-        if not (self.op and self.seg and self.addr is not None): ### FUCK push constant 0   (isinstance check but i will do later)
+        if not (self.op and self.seg and self.addr is not None): ###can mess if push constant 0 (though it wont)   (isinstance check but i will do later)
             raise SyntaxError("FATAL ERROR: Invalid Operation")
         self.fname=fname
         self.n2=n2        
@@ -58,64 +58,20 @@ class Operation:
         if self.op == "push":
             if self.seg == "constant":
                 val=self.addr
-                return f"""
-@{val}
-D=A
-@SP
-A=M
-M=D
-@SP
-M=M+1            
-            """
+                return f"""@{val}\nD=A\n@SP\nA=M\nM=D\n@SP\nM=M+1"""
             elif self.seg == "temp":
                 tar=self.addr+5
-                return f"""
-@{tar}
-D=M
-@SP
-A=M
-M=D
-@SP
-M=M+1 
-            
-            """
+                return f"""@{tar}\nD=M\n@SP\nA=M\nM=D\n@SP\nM=M+1\n"""
             elif self.seg == "static":
                 fn=self.fname
                 addr=self.addr
                 
-                return f"""
-            
-@{fn}.{addr}
-D=M
-@SP
-A=M
-M=D
-@SP
-M=M+1 
-            
-            
-            
-            """
+                return f"""@{fn}.{addr}\nD=M\n@SP\nA=M\nM=D\n@SP\nM=M+1"""
                 
             elif self.seg in ARGMAPS.keys():
                 star=ARGMAPS.get(self.seg)
                 addr=self.addr
-                return f"""
-            
-@{star}
-D=M
-@{addr}
-D=D+A
-A=D
-D=M
-@SP
-A=M
-M=D
-@SP
-M=M+1 
-            
-            
-            """
+                return f"""@{star}\nD=M\n@{addr}\nD=D+A\nA=D\nD=M\n@SP\nA=M\nM=D\n@SP\nM=M+1"""
             elif self.seg == "pointer":
                 tar=self.addr+3
                 return f"""
@@ -127,7 +83,7 @@ M=D
 @SP
 M=M+1
                               
-            """
+            """.strip()
                 
         else:
             if self.seg in ARGMAPS.keys():
@@ -135,43 +91,16 @@ M=M+1
                 ### we shall use R13 as the temporary tzradf 
                 addd=self.addr
                 tseg=ARGMAPS.get(self.seg)
-                return f"""
-@{tseg}
-D=M
-@{addd}
-D=D+A
-@R13
-M=D
-@SP
-AM=M-1
-D=M
-@R13
-A=M
-M=D
-            """
+                return f"""@{tseg}\nD=M\n@{addd}\nD=D+A\n@R13\nM=D\n@SP\nAM=M-1\nD=M\n@R13\nA=M\nM=D\n"""
                 
             if self.seg == "temp":
                 addd=self.addr+5
-                return f"""
-            
-@SP
-AM=M-1
-D=M
-@{addd}
-M=D         
-            """
+                return f"""@SP\nAM=M-1\nD=M\n@{addd}\nM=D"""
             elif self.seg == "static":
                 fnp=self.fname
                 adddd=self.addr
                 
-                return f"""
-@SP
-AM=M-1
-D=M
-@{fnp}.{adddd}
-M=D
-            
-            """
+                return f"""@SP\nAM=M-1\nD=M\n@{fnp}.{adddd}\nM=D"""
 
         
             elif self.seg == "pointer":
@@ -183,7 +112,7 @@ D=M
 @{tar}
 M=D
                               
-            """
+            """.strip()
             
             
             
@@ -213,7 +142,7 @@ A=A-1
 M=M{mbap[op]}D
     
     
-    """
+    """.strip()
   
     #eq : logic is to pull the the top of stack(A) and chekc with next
     map={
@@ -238,7 +167,7 @@ A=M-1
 M=0
 (EQ{n2})
     
-    """
+    """.strip()
     
     umap={
         "neg" : "-",
@@ -252,7 +181,7 @@ A=M-1
 M={umap[op]}M
     
     
-    """
+    """.strip()
     
     
 # gt lt eq
@@ -279,7 +208,7 @@ AM=M-1
 D=M
 @{fname}.{kw}
 D;JNE
-"""
+""".strip()
 
 
 def handlefun(command:str, fun:str, nums:int, n2:int):
@@ -294,7 +223,7 @@ D=A
 A=M
 M=D
 @SP
-M=M+1                                 """)
+M=M+1                                 """.strip())
         for seg in ["LCL", "ARG", "THIS", "THAT"]:
             asm.append(f"@{seg}\nD=M\n@SP\nA=M\nM=D\n@SP\nM=M+1")
         
@@ -320,14 +249,13 @@ A=M
 M=D
 @SP
 M=M+1                                         
-                       """)
+                       """.strip())
         return "\n".join(asm)
             
     
     
     elif command=="return":
-        return f"""
-@LCL
+        return f"""@LCL
 D=M
 @R13
 M=D
@@ -368,7 +296,4 @@ D=M
 M=D
 @R14
 A=M
-0;JMP
-    
-    
-    """
+0;JMP"""
