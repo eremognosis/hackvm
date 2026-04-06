@@ -1,7 +1,7 @@
 import sys
 import os
 import glob
-from basic import parse, handlefun # Assuming handlefun is accessible
+from src.basic import parse, handlefun # Assuming handlefun is accessible
 
 def get_bootstrap():
     """Initializes SP to 256 and calls Sys.init 0"""
